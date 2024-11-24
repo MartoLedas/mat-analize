@@ -2,42 +2,60 @@ import matplotlib.pyplot as plt
 from matplotlib import widgets
 import numpy as np
 
+# Graph 1
+# TODO: make cobweb graph update with the slider
+# TODO: make cobweb graph point enterable
+
+# Constants
+graphStart = -10
+graphEnd = 10
+graphPointCount = 1000
+
+iterationPoint = 0.9
+iterationCount = 10
+
 def function(x, a):
-    return -a * x * (1 - x)
+    return a * x * (1 - x)
+
 
 # Data
-x = np.linspace(-10, 10, 100)
+x = np.linspace(graphStart, graphEnd, graphPointCount)
 a = 1
 y = function(x, a)
 
-# Plot
-fig, axes = plt.subplots(nrows=1,ncols=2)
+# Plot Function graph
+fig, axes = plt.subplots(nrows=1, ncols=2)
 ax = axes[0]
 line, = ax.plot(x, y, color='blue', lw=2)
 ax.set_xlabel('x')
 ax.set_ylabel('y')
-
 ax.set_title('f(x) = ax(1-x)')
 
-def drawLine(x1, y1, x2, y2):
-    plt.plot([x1, x2], [y1, y2], color='black', lw=1)
 
+# Utility wrapper for drawing on graph
+def drawLine(x1, y1, x2, y2, width=1, color='green'):
+    plt.plot([x1, x2], [y1, y2], color=color, lw=width)
+
+
+# Cobweb
 plt.subplot(1, 2, 1)
-drawLine(-100, -100, 100, 100, width=1)
-iterationPoint = 1.1
-iterationCount = 1
-for i in range(1):
-    iterationValue = function(iterationPoint, a)
-    drawLine(iterationPoint, 0, iterationPoint, iterationValue)
-    drawLine(iterationPoint, iterationValue, iterationValue, iterationValue)
-    iterationPoint = iterationValue
+plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
+drawLine(graphStart, graphStart, graphEnd, graphEnd, width=1, color='black')
+
+def drawCobweb(iterationPoint: float):
+    x = iterationPoint
+    fx = function(x, a)
+    drawLine(x, 0, x, fx)
+
+    for _ in range(iterationCount):
+        drawLine(x, fx, fx, fx)
+        ffx = function(fx, a)
+        drawLine(fx, fx, fx, ffx)
+        x = fx
+        fx = ffx
+drawCobweb(iterationPoint)
 
 
-
-# Update data based on slider value
-def update(val):
-    a = slider.val
-    line.set_ydata(function(x, a))
 
 # Slider
 slider = widgets.Slider(
@@ -48,7 +66,14 @@ slider = widgets.Slider(
     valinit=a
 )
 
-# Annotation
+def update(val):
+    a = slider.val
+    line.set_ydata(function(x, a))
+    
+slider.on_changed(update)
+
+
+# On click value display
 annot = ax.annotate(
     "", xy=(0, 0), xytext=(10, 10),
     textcoords="offset points",
@@ -71,8 +96,6 @@ def print_clicked_point(event):
     annot.set_visible(True)
     fig.canvas.draw_idle()
 
-
-slider.on_changed(update)
 fig.canvas.mpl_connect('button_press_event', print_clicked_point)
 
 
