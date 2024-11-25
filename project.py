@@ -6,39 +6,43 @@ import numpy as np
 # Constants
 graph_start = -5
 graph_end = 5
-graph_point_count = 1000
+graph_point_density = 100
 
 parameter_starting_value = 0
 parameter_slider_range = (graph_start, graph_end)
 
 cobweb_starting_point = 0
 cobweb_slider_range = (graph_start, graph_end)
-cobweb_iteration_count = 10
+cobweb_iteration_count = 25
 
 def function(x, a):
     return a * x * (1 - x)
 
-# Data
-x = np.linspace(graph_start, graph_end, graph_point_count)
-a = parameter_starting_value
-y = function(x, a)
 
 # Plot Function graph
 fig, axes = plt.subplots(nrows=1, ncols=2)
 
 
-# Configure Graph 2
+# Graph 2
 # TODO
-ax = axes[1]
-ax.set_position([0.55, 0.1, 0.4, 0.6])
+ax2 = axes[1]
+ax2.set_position([0.55, 0.1, 0.4, 0.6])
 
-# Configure Graph 1
-ax = axes[0]
-line, = ax.plot(x, y, color='blue', lw=2)
-ax.set_position([0.05, 0.1, 0.4, 0.6])
-ax.set_xlabel('x')
-ax.set_ylabel('y')
-ax.set_title('f(x) = ax(1-x)')
+
+
+# Graph 1
+ax1 = axes[0]
+# Data
+x = np.linspace(graph_start, graph_end, graph_point_density)
+a = parameter_starting_value
+y = function(x, a)
+
+# Configure Axes
+line, = ax1.plot(x, y, color='blue', lw=2)
+ax1.set_position([0.05, 0.1, 0.4, 0.6])
+ax1.set_xlabel('x')
+ax1.set_ylabel('y')
+ax1.set_title('f(x) = ax(1-x)')
 
 
 # Utility for drawing on graph
@@ -69,9 +73,9 @@ def drawSingleSine(ax, x1, y1, x2, y2, color='black', width=1):
 # Cobweb
 plt.subplot(1, 2, 1)
 plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
-drawSingleSine(ax, graph_start, graph_start, graph_end, graph_end, color='black', width=1)
-drawSingleSine(ax, graph_start, 0, graph_end, 0, color='black', width=1)
-drawSingleSine(ax, 0, graph_start, 0, graph_end, color='black', width=1)
+drawSingleSine(ax1, graph_start, graph_start, graph_end, graph_end, color='black', width=1)
+drawSingleSine(ax1, graph_start, 0, graph_end, 0, color='black', width=1)
+drawSingleSine(ax1, 0, graph_start, 0, graph_end, color='black', width=1)
 
 
 def drawCobweb(iterationPoint: float):
@@ -86,7 +90,7 @@ def drawCobweb(iterationPoint: float):
         fx = ffx
 
 drawCobweb(cobweb_starting_point)
-cobweb_graph, = dumpLines(ax=ax, color='green', width=1.5)
+cobweb_graph, = dumpLines(ax=ax1, color='green', width=1)
 
 
 # Parameter "a" Slider
@@ -131,7 +135,7 @@ cobweb_slider.on_changed(update_cobweb)
 
 
 # On click function value display
-annot = ax.annotate(
+annot = ax1.annotate(
     "", xy=(0, 0), xytext=(10, 10),
     textcoords="offset points",
     bbox=dict(boxstyle="round,pad=0.3", fc="yellow", alpha=0.7),
@@ -139,21 +143,37 @@ annot = ax.annotate(
 )
 annot.set_visible(False)
 
-def print_clicked_point(event):
-    if event.inaxes != ax:
+def handle_click(mouse_event):
+    ax = axes[0]
+    if mouse_event.inaxes != ax:
         annot.set_visible(False)
         fig.canvas.draw_idle()
         return
-    x, y = event.xdata, event.ydata
-    point_val = function(event.xdata, parameter_slider.val)
-    print(f'Clicked point: ({x}, {point_val})')
 
-    annot.xy = (x, point_val)
-    annot.set_text(f'({x:.2f}, {point_val:.2f})')
-    annot.set_visible(True)
-    fig.canvas.draw_idle()
+    if mouse_event.button == 2:
+        # cobweb_slider.val = mouse_event.xdata
+        cobweb_slider.set_val(mouse_event.xdata)
+        update_cobweb(cobweb_slider.val)
+        fig.canvas.draw_idle()
 
-fig.canvas.mpl_connect('button_press_event', print_clicked_point)
+    if mouse_event.button == 3:
+        x, y = mouse_event.xdata, mouse_event.ydata
+        point_val = function(mouse_event.xdata, parameter_slider.val)
+        print(f'Clicked point: ({x}, {point_val})')
+
+        annot.xy = (x, point_val)
+        annot.set_text(f'({x:.2f}, {point_val:.2f})')
+        annot.set_visible(True)
+        fig.canvas.draw_idle()
+
+fig.canvas.mpl_connect('button_press_event', handle_click)
+
+def handle_motion(mouse_event):
+    ax = axes[0]
+    line.set_xdata(np.linspace(ax.get_xlim()[0], ax.get_xlim()[1], graph_point_density))
+    line.set_ydata(function(line.get_xdata(), a))
+
+fig.canvas.mpl_connect('motion_notify_event', lambda e: handle_motion(e))
 
 
 plt.show()
