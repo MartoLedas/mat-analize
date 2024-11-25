@@ -2,78 +2,135 @@ import matplotlib.pyplot as plt
 from matplotlib import widgets
 import numpy as np
 
-# Graph 1
-# TODO: make cobweb graph update with the slider
-# TODO: make cobweb graph point enterable
 
 # Constants
-graphStart = -10
-graphEnd = 10
-graphPointCount = 1000
+graph_start = -5
+graph_end = 5
+graph_point_count = 1000
 
-iterationPoint = 0.9
-iterationCount = 10
+parameter_starting_value = 0
+parameter_slider_range = (graph_start, graph_end)
+
+cobweb_starting_point = 0
+cobweb_slider_range = (graph_start, graph_end)
+cobweb_iteration_count = 10
 
 def function(x, a):
     return a * x * (1 - x)
 
-
 # Data
-x = np.linspace(graphStart, graphEnd, graphPointCount)
-a = 1
+x = np.linspace(graph_start, graph_end, graph_point_count)
+a = parameter_starting_value
 y = function(x, a)
 
 # Plot Function graph
 fig, axes = plt.subplots(nrows=1, ncols=2)
+
+
+# Configure Graph 2
+# TODO
+ax = axes[1]
+ax.set_position([0.55, 0.1, 0.4, 0.6])
+
+# Configure Graph 1
 ax = axes[0]
 line, = ax.plot(x, y, color='blue', lw=2)
+ax.set_position([0.05, 0.1, 0.4, 0.6])
 ax.set_xlabel('x')
 ax.set_ylabel('y')
 ax.set_title('f(x) = ax(1-x)')
 
 
-# Utility wrapper for drawing on graph
-def drawLine(x1, y1, x2, y2, width=1, color='green'):
-    plt.plot([x1, x2], [y1, y2], color=color, lw=width)
+# Utility for drawing on graph
+xx = []
+yy = []
+def drawLine(x1, y1, x2, y2):
+    global xx, yy
+    xx.append(x1)
+    yy.append(y1)
+    xx.append(x2)
+    yy.append(y2)
+
+def dumpLines(ax, color='black', width=1):
+    global xx, yy
+    result = ax.plot(xx, yy, color=color, lw=width)
+    xx, yy = [], []
+    return result
+def clearLines():
+    global xx, yy
+    xx, yy = [], []
+def drawSingleSine(ax, x1, y1, x2, y2, color='black', width=1):
+    clearLines()
+    drawLine(x1, y1, x2, y2)
+    dumpLines(ax=ax, color=color, width=width)
+    clearLines()
 
 
 # Cobweb
 plt.subplot(1, 2, 1)
 plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
-drawLine(graphStart, graphStart, graphEnd, graphEnd, width=1, color='black')
+drawSingleSine(ax, graph_start, graph_start, graph_end, graph_end, color='black', width=1)
+drawSingleSine(ax, graph_start, 0, graph_end, 0, color='black', width=1)
+drawSingleSine(ax, 0, graph_start, 0, graph_end, color='black', width=1)
+
 
 def drawCobweb(iterationPoint: float):
     x = iterationPoint
     fx = function(x, a)
     drawLine(x, 0, x, fx)
-
-    for _ in range(iterationCount):
+    for _ in range(cobweb_iteration_count):
         drawLine(x, fx, fx, fx)
         ffx = function(fx, a)
         drawLine(fx, fx, fx, ffx)
         x = fx
         fx = ffx
-drawCobweb(iterationPoint)
+
+drawCobweb(cobweb_starting_point)
+cobweb_graph, = dumpLines(ax=ax, color='green', width=1.5)
 
 
-
-# Slider
-slider = widgets.Slider(
+# Parameter "a" Slider
+parameter_slider = widgets.Slider(
     plt.axes([0.2, 0.95, 0.6, 0.05]),
-    'Amplitude',
-    -5.0,
-    5.0,
+    'Parameter "a"',
+    parameter_slider_range[0],
+    parameter_slider_range[1],
     valinit=a
 )
 
-def update(val):
-    a = slider.val
+def update_parameter_a(val):
+    global a
+    a = parameter_slider.val
     line.set_ydata(function(x, a))
-    
-slider.on_changed(update)
+    clearLines()
+    drawCobweb(cobweb_starting_point)
+    cobweb_graph.set_xdata(xx)
+    cobweb_graph.set_ydata(yy)
+
+parameter_slider.on_changed(update_parameter_a)
 
 
-# On click value display
+# Cobweb Slider
+cobweb_slider = widgets.Slider(
+    plt.axes([0.3, 0.90, 0.4, 0.05]),
+    'Cobweb Iteration Point',
+    cobweb_slider_range[0],
+    cobweb_slider_range[1],
+    valinit=cobweb_starting_point
+)
+
+def update_cobweb(val):
+    global cobweb_starting_point
+    cobweb_starting_point = cobweb_slider.val
+    clearLines()
+    drawCobweb(cobweb_starting_point)
+    cobweb_graph.set_xdata(xx)
+    cobweb_graph.set_ydata(yy)
+
+cobweb_slider.on_changed(update_cobweb)
+
+
+# On click function value display
 annot = ax.annotate(
     "", xy=(0, 0), xytext=(10, 10),
     textcoords="offset points",
@@ -88,7 +145,7 @@ def print_clicked_point(event):
         fig.canvas.draw_idle()
         return
     x, y = event.xdata, event.ydata
-    point_val = function(event.xdata, slider.val)
+    point_val = function(event.xdata, parameter_slider.val)
     print(f'Clicked point: ({x}, {point_val})')
 
     annot.xy = (x, point_val)
