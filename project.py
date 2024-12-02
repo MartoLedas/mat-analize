@@ -27,6 +27,25 @@ fig, axes = plt.subplots(nrows=1, ncols=2)
 # TODO
 ax2 = axes[1]
 ax2.set_position([0.55, 0.1, 0.4, 0.6])
+A_MIN = 1
+A_MAX = 4
+A_DELTA = 0.005
+NUM_IT = 200
+X_INIT = 0.5
+
+x = X_INIT
+for mu in np.arange(A_MIN, A_MAX, A_DELTA):
+    y = []
+    for _ in range(NUM_IT):
+        x = mu * x * (1.0 - x)
+        y.append(x)
+    ax2.plot([mu] * len(y), y, '.k', markersize=0.5)  # Feigenbaum tree
+ax2.set_xlabel('$a$')
+ax2.set_ylabel('$x$')
+ax2.set_title('Feigenbaum Tree')
+
+
+
 
 
 
