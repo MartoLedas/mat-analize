@@ -22,27 +22,45 @@ def function(x, a):
 fig, axes = plt.subplots(nrows=1, ncols=2)
 
 
-# Graph 2
-# TODO
+# Graph 2 - Feigenbaum Tree with Bifurcation Points
 ax2 = axes[1]
 ax2.set_position([0.55, 0.1, 0.4, 0.6])
-A_MIN = 1
+
+A_MIN = 2.5
 A_MAX = 4
 A_DELTA = 0.005
 NUM_IT = 200
+NUM_IT_TRANSIENT = 1000
 X_INIT = 0.5
 
+bifurcation_points = []
+
 x = X_INIT
+prev_unique_count = 1
 for mu in np.arange(A_MIN, A_MAX, A_DELTA):
     y = []
-    for _ in range(NUM_IT):
+    for it in range(NUM_IT + NUM_IT_TRANSIENT):
         x = mu * x * (1.0 - x)
-        y.append(x)
-    ax2.plot([mu] * len(y), y, '.k', markersize=0.5)  # Feigenbaum tree
+        if it >= NUM_IT_TRANSIENT:
+            y.append(x)
+
+    unique_points = np.unique(np.round(y, decimals=5))
+    unique_count = len(unique_points)
+
+    # Detect bifurcation when unique count doubles
+    if unique_count == 2 * prev_unique_count and mu not in bifurcation_points:
+        bifurcation_points.append(mu)
+        prev_unique_count = unique_count
+
+    ax2.plot([mu] * len(y), y, '.k', markersize=0.5)
+
+for i, mu_bif in enumerate(bifurcation_points[:3]):
+    ax2.axvline(mu_bif, color='red', linestyle='--', label=f"Bifurcation {i+1}: a ≈ {mu_bif:.4f}")
+
 ax2.set_xlabel('$a$')
 ax2.set_ylabel('$x$')
 ax2.set_title('Feigenbaum Tree')
-
+ax2.legend()
 
 
 # Graph 1
