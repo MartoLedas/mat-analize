@@ -91,11 +91,8 @@ def getIterationDefRanges(start, end, step, a):
             return x
         return calcIteration(function(x, a), a, count - 1)
 
-    def rangeF(start, end, step):
-        return np.arange(start, end, step)
-
     prev_is_inf = True
-    for i in rangeF(start, end, step):
+    for i in np.arange(start, end, step):
         val = calcIteration(i, a, iteration_count)
         curr_is_inf = np.isinf(val)
         if not prev_is_inf and curr_is_inf:
@@ -123,6 +120,44 @@ definition_text = ax1.text(0, 1.1, getIterationDefRanges(-100, 100, precision, a
         verticalalignment='bottom', horizontalalignment='left',
         transform=ax1.transAxes,
         color='green', fontsize=9)
+
+def update_function_definition_ranges():
+    definition_text.set_text(getIterationDefRanges(-100, 100, precision, a))
+
+
+# Graph 3 - Orbit
+
+ax3 = axes[2]
+
+def update_orbit(x):
+    orbit = generate_orbit(x, a, cobweb_iteration_count)
+    orbit_line.set_ydata(orbit)
+
+# Generate time series for the orbit
+def generate_orbit(initial_point, a, iterations):
+    orbit = [initial_point]
+    x = initial_point
+    for _ in range(iterations):
+        x = function(x, a)
+        orbit.append(x)
+    return orbit
+
+# Parameters
+initial_point = cobweb_starting_point
+iterations = cobweb_iteration_count
+
+# Generate and plot the orbit time series
+orbit = generate_orbit(initial_point, a, iterations)
+orbit_line,  = ax3.plot(orbit, marker='o', linestyle='-', label=f"Orbit (a={a})")
+ax3.set_xlabel("Iteration (Time Step)")
+ax3.set_ylabel("Value of x")
+ax3.set_title("Time Series of the Orbit")
+ax3.grid()
+
+ax3.legend(loc='lower left')
+
+
+
 
 
 # Utility for drawing on graph
@@ -190,12 +225,10 @@ def update_parameter_a(val):
         parameter_slider.set_val(a)
         pass
     line.set_ydata(function(x, a))
-    clearLines()
-    drawCobweb(cobweb_starting_point)
-    cobweb_graph.set_xdata(xx)
-    cobweb_graph.set_ydata(yy)
-    definitions = getIterationDefRanges(-100, 100, precision, a)
-    definition_text.set_text(definitions)
+    update_cobweb(cobweb_starting_point)
+
+    update_orbit(cobweb_starting_point)
+    update_function_definition_ranges()
     fig.canvas.draw_idle()
 
 parameter_slider.on_changed(update_parameter_a)
@@ -228,6 +261,7 @@ def handle_click(mouse_event):
         return
 
     if mouse_event.button == 3:
+        update_orbit(mouse_event.xdata)
         update_cobweb(mouse_event.xdata)
         fig.canvas.draw_idle()
 
@@ -247,34 +281,5 @@ def handle_motion(mouse_event):
     line.set_ydata(function(line.get_xdata(), a))
 
 fig.canvas.mpl_connect('motion_notify_event', lambda e: handle_motion(e))
-
-ax3 = axes[2]
-# Example: Logistic map
-def logistic_map(x, r):
-    return r * x * (1 - x)
-
-# Generate time series for the orbit
-def generate_orbit(initial_point, param, iterations):
-    orbit = [initial_point]
-    x = initial_point
-    for _ in range(iterations):
-        x = logistic_map(x, param)
-        orbit.append(x)
-    return orbit
-
-# Parameters
-initial_point = 0.5
-r = 3.7
-iterations = 50
-
-# Generate and plot the orbit time series
-orbit = generate_orbit(initial_point, r, iterations)
-ax3.plot(orbit, marker='o', linestyle='-', label=f"Orbit (r={r})")
-ax3.set_xlabel("Iteration (Time Step)")
-ax3.set_ylabel("Value of x")
-# ax3.title("Time Series of the Orbit")
-ax3.grid()
-
-ax3.legend(loc='lower left')
 
 plt.show()
