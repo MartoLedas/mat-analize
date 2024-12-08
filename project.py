@@ -45,7 +45,6 @@ ax2.set_title('Feigenbaum Tree')
 
 
 
-
 # Graph 1
 ax1 = axes[0]
 # Data
