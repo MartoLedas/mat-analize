@@ -57,6 +57,9 @@ for mu in np.arange(A_MIN, A_MAX, A_DELTA):
 for i, mu_bif in enumerate(bifurcation_points[:3]):
     ax2.axvline(mu_bif, color='red', linestyle='--', label=f"Bifurcation {i+1}: a ≈ {mu_bif:.4f}")
 
+ax2.axvline(A_MAX, color='blue', linestyle='--', label=f"Limit: a = {A_MAX}")
+
+
 ax2.set_xlabel('$a$')
 ax2.set_ylabel('$x$')
 ax2.set_title('Feigenbaum Tree')
