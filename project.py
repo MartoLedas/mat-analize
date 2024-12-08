@@ -6,18 +6,17 @@ import numpy as np
 # Constants
 graph_start = -5
 graph_end = 5
-graph_point_density = 100
+graph_point_density = 50
 
 parameter_starting_value = 0
-parameter_slider_range = (graph_start, graph_end)
+parameter_slider_range = (-2, 4)
 
 cobweb_starting_point = 0
-cobweb_slider_range = (graph_start, graph_end)
-cobweb_iteration_count = 25
+cobweb_iteration_count = 10
+precision = 0.05
 
 def function(x, a):
     return a * x * (1 - x)
-
 
 # Plot Function graph
 fig, axes = plt.subplots(nrows=1, ncols=2)
@@ -47,8 +46,6 @@ ax2.set_title('Feigenbaum Tree')
 
 
 
-
-
 # Graph 1
 ax1 = axes[0]
 # Data
@@ -62,6 +59,51 @@ ax1.set_position([0.05, 0.1, 0.4, 0.6])
 ax1.set_xlabel('x')
 ax1.set_ylabel('y')
 ax1.set_title('f(x) = ax(1-x)')
+
+
+# Definition ranges
+def getIterationDefRanges(start, end, step, a):
+    if np.abs(a) < step:
+        return "Always defined."
+    iteration_count = 50
+    definition_status_changes = []
+    def calcIteration(x, a, count):
+        if count <= 0:
+            return x
+        return calcIteration(function(x, a), a, count - 1)
+
+    def rangeF(start, end, step):
+        return np.arange(start, end, step)
+
+    prev_is_inf = True
+    for i in rangeF(start, end, step):
+        val = calcIteration(i, a, iteration_count)
+        curr_is_inf = np.isinf(val)
+        if not prev_is_inf and curr_is_inf:
+            definition_status_changes.append((i, 'infinite'))
+        elif prev_is_inf and not curr_is_inf:
+            definition_status_changes.append((i, 'finite'))
+        prev_is_inf = curr_is_inf
+
+    defined_intervals = [val for (val, _) in definition_status_changes]
+
+    undefined_intervals = [-np.inf]
+    undefined_intervals.extend(defined_intervals)
+    undefined_intervals.append(np.inf)
+
+    undefined_intervals = [f"({undefined_intervals[i]:.2f}; {undefined_intervals[i+1]:.2f})" for i in range(0, len(undefined_intervals), 2)]
+    defined_intervals = [f"({defined_intervals[i]:.2f}; {defined_intervals[i+1]:.2f})" for i in range(0, len(defined_intervals), 2)]
+
+    result_string = f"""Defined intervals: {' '.join(str(defined_intervals))}
+Undefined intervals: {' '.join(str((undefined_intervals)))}
+    """
+
+    return result_string
+
+definition_text = ax1.text(0, 1.1, getIterationDefRanges(-100, 100, precision, a),
+        verticalalignment='bottom', horizontalalignment='left',
+        transform=ax1.transAxes,
+        color='green', fontsize=9)
 
 
 # Utility for drawing on graph
@@ -124,33 +166,30 @@ parameter_slider = widgets.Slider(
 def update_parameter_a(val):
     global a
     a = parameter_slider.val
+    if np.abs(a) < precision:
+        a = 0
+        parameter_slider.set_val(a)
+        pass
     line.set_ydata(function(x, a))
     clearLines()
     drawCobweb(cobweb_starting_point)
     cobweb_graph.set_xdata(xx)
     cobweb_graph.set_ydata(yy)
+    definitions = getIterationDefRanges(-100, 100, precision, a)
+    definition_text.set_text(definitions)
+    fig.canvas.draw_idle()
 
 parameter_slider.on_changed(update_parameter_a)
 
 
-# Cobweb Slider
-cobweb_slider = widgets.Slider(
-    plt.axes([0.3, 0.90, 0.4, 0.05]),
-    'Cobweb Iteration Point',
-    cobweb_slider_range[0],
-    cobweb_slider_range[1],
-    valinit=cobweb_starting_point
-)
-
 def update_cobweb(val):
     global cobweb_starting_point
-    cobweb_starting_point = cobweb_slider.val
+    cobweb_starting_point = val
     clearLines()
     drawCobweb(cobweb_starting_point)
     cobweb_graph.set_xdata(xx)
     cobweb_graph.set_ydata(yy)
-
-cobweb_slider.on_changed(update_cobweb)
+    fig.canvas.draw_idle()
 
 
 # On click function value display
@@ -169,17 +208,13 @@ def handle_click(mouse_event):
         fig.canvas.draw_idle()
         return
 
-    if mouse_event.button == 2:
-        # cobweb_slider.val = mouse_event.xdata
-        cobweb_slider.set_val(mouse_event.xdata)
-        update_cobweb(cobweb_slider.val)
+    if mouse_event.button == 3:
+        update_cobweb(mouse_event.xdata)
         fig.canvas.draw_idle()
 
-    if mouse_event.button == 3:
+    if mouse_event.button == 2:
         x, y = mouse_event.xdata, mouse_event.ydata
         point_val = function(mouse_event.xdata, parameter_slider.val)
-        print(f'Clicked point: ({x}, {point_val})')
-
         annot.xy = (x, point_val)
         annot.set_text(f'({x:.2f}, {point_val:.2f})')
         annot.set_visible(True)
