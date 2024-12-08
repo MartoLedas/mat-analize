@@ -19,12 +19,12 @@ def function(x, a):
     return a * x * (1 - x)
 
 # Plot Function graph
-fig, axes = plt.subplots(nrows=1, ncols=2)
+fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(15, 5))
+plt.subplots_adjust(top=0.75)
 
 
 # Graph 2 - Feigenbaum Tree with Bifurcation Points
 ax2 = axes[1]
-ax2.set_position([0.55, 0.1, 0.4, 0.6])
 
 A_MIN = 2.5
 A_MAX = 4
@@ -75,7 +75,6 @@ y = function(x, a)
 
 # Configure Axes
 line, = ax1.plot(x, y, color='blue', lw=2)
-ax1.set_position([0.05, 0.1, 0.4, 0.6])
 ax1.set_xlabel('x')
 ax1.set_ylabel('y')
 ax1.set_title('f(x) = ax(1-x)')
@@ -152,8 +151,8 @@ def drawSingleSine(ax, x1, y1, x2, y2, color='black', width=1):
 
 
 # Cobweb
-plt.subplot(1, 2, 1)
-plt.grid(color = 'black', linestyle = '--', linewidth = 0.5)
+
+ax1.grid(color = 'black', linestyle = '--', linewidth = 0.5)
 drawSingleSine(ax1, graph_start, graph_start, graph_end, graph_end, color='black', width=1)
 drawSingleSine(ax1, graph_start, 0, graph_end, 0, color='black', width=1)
 drawSingleSine(ax1, 0, graph_start, 0, graph_end, color='black', width=1)
@@ -249,5 +248,33 @@ def handle_motion(mouse_event):
 
 fig.canvas.mpl_connect('motion_notify_event', lambda e: handle_motion(e))
 
+ax3 = axes[2]
+# Example: Logistic map
+def logistic_map(x, r):
+    return r * x * (1 - x)
+
+# Generate time series for the orbit
+def generate_orbit(initial_point, param, iterations):
+    orbit = [initial_point]
+    x = initial_point
+    for _ in range(iterations):
+        x = logistic_map(x, param)
+        orbit.append(x)
+    return orbit
+
+# Parameters
+initial_point = 0.5
+r = 3.7
+iterations = 50
+
+# Generate and plot the orbit time series
+orbit = generate_orbit(initial_point, r, iterations)
+ax3.plot(orbit, marker='o', linestyle='-', label=f"Orbit (r={r})")
+ax3.set_xlabel("Iteration (Time Step)")
+ax3.set_ylabel("Value of x")
+# ax3.title("Time Series of the Orbit")
+ax3.grid()
+
+ax3.legend(loc='lower left')
 
 plt.show()
