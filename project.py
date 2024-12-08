@@ -148,13 +148,11 @@ iterations = cobweb_iteration_count
 
 # Generate and plot the orbit time series
 orbit = generate_orbit(initial_point, a, iterations)
-orbit_line,  = ax3.plot(orbit, marker='o', linestyle='-', label=f"Orbit (a={a})")
+orbit_line,  = ax3.plot(orbit, marker='o', linestyle='-')
 ax3.set_xlabel("Iteration (Time Step)")
 ax3.set_ylabel("Value of x")
 ax3.set_title("Time Series of the Orbit")
 ax3.grid()
-
-ax3.legend(loc='lower left')
 
 
 
