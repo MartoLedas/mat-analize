@@ -93,7 +93,7 @@ def getIterationDefRanges(start, end, step, a):
 
     prev_is_inf = True
     for i in np.arange(start, end, step):
-        val = calcIteration(i, a, iteration_count)
+        val = calcIteration(cobweb_starting_point, i, iteration_count)
         curr_is_inf = np.isinf(val)
         if not prev_is_inf and curr_is_inf:
             definition_status_changes.append((i, 'infinite'))
@@ -101,6 +101,7 @@ def getIterationDefRanges(start, end, step, a):
             definition_status_changes.append((i, 'finite'))
         prev_is_inf = curr_is_inf
 
+    # print(definition_status_changes)
     defined_intervals = [val for (val, _) in definition_status_changes]
 
     undefined_intervals = [-np.inf]
@@ -261,6 +262,7 @@ def handle_click(mouse_event):
     if mouse_event.button == 3:
         update_orbit(mouse_event.xdata)
         update_cobweb(mouse_event.xdata)
+        update_function_definition_ranges()
         fig.canvas.draw_idle()
 
     if mouse_event.button == 2:
