@@ -12,8 +12,10 @@ parameter_starting_value = 0
 parameter_slider_range = (-2, 4)
 
 cobweb_starting_point = 0
-cobweb_iteration_count = 10
-precision = 0.05
+cobweb_iteration_count = 100
+precision = 0.01
+
+definition_ranges = (-10, 10)
 
 def function(x, a):
     return a * x * (1 - x)
@@ -108,8 +110,12 @@ def getIterationDefRanges(start, end, step, a):
     undefined_intervals.extend(defined_intervals)
     undefined_intervals.append(np.inf)
 
-    undefined_intervals = [f"({undefined_intervals[i]:.2f}; {undefined_intervals[i+1]:.2f})" for i in range(0, len(undefined_intervals), 2)]
-    defined_intervals = [f"({defined_intervals[i]:.2f}; {defined_intervals[i+1]:.2f})" for i in range(0, len(defined_intervals), 2)]
+    try:
+        undefined_intervals = [f"({undefined_intervals[i]:.2f}; {undefined_intervals[i+1]:.2f})" for i in range(0, len(undefined_intervals), 2)]
+        defined_intervals = [f"({defined_intervals[i]:.2f}; {defined_intervals[i+1]:.2f})" for i in range(0, len(defined_intervals), 2)]
+    except:
+        undefined_intervals = []
+        defined_intervals = []
 
     result_string = f"""Defined intervals: {' '.join(str(defined_intervals))}
 Undefined intervals: {' '.join(str((undefined_intervals)))}
@@ -117,13 +123,13 @@ Undefined intervals: {' '.join(str((undefined_intervals)))}
 
     return result_string
 
-definition_text = ax1.text(0, 1.1, getIterationDefRanges(-100, 100, precision, a),
+definition_text = ax1.text(0, 1.1, getIterationDefRanges(*definition_ranges, precision, a),
         verticalalignment='bottom', horizontalalignment='left',
         transform=ax1.transAxes,
         color='green', fontsize=9)
 
 def update_function_definition_ranges():
-    definition_text.set_text(getIterationDefRanges(-100, 100, precision, a))
+    definition_text.set_text(getIterationDefRanges(*definition_ranges, precision, a))
 
 
 # Graph 3 - Orbit
@@ -150,8 +156,8 @@ iterations = cobweb_iteration_count
 # Generate and plot the orbit time series
 orbit = generate_orbit(initial_point, a, iterations)
 orbit_line,  = ax3.plot(orbit, marker='o', linestyle='-')
-ax3.set_xlabel("Iteration (Time Step)")
-ax3.set_ylabel("Value of x")
+ax3.set_xlabel("Iteration)")
+ax3.set_ylabel("x")
 ax3.set_title("Time Series of the Orbit")
 ax3.grid()
 
