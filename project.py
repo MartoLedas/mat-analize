@@ -140,6 +140,13 @@ def update_orbit(x):
     orbit = generate_orbit(x, a, cobweb_iteration_count)
     orbit_line.set_ydata(orbit)
 
+    # Dynamically adjust x and y limits to fit all points
+    ax3.set_xlim(0, len(orbit))  # Fit all iterations on x-axis
+    ax3.set_ylim(min(orbit) - 0.1, max(orbit) + 0.1)  # Add padding to y-axis
+
+    # Redraw the figure
+    fig.canvas.draw_idle()
+
 # Generate time series for the orbit
 def generate_orbit(initial_point, a, iterations):
     orbit = [initial_point]
